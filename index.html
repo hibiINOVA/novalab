@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NOVALAB</title>
+<style>
+  body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+         background:#0b0f14; color:#e6edf3; font-family:system-ui,sans-serif; }
+  .box { text-align:center; }
+  .logo { font-size:1.6rem; font-weight:700; letter-spacing:.12em; color:#00ff87; }
+  .msg { margin-top:.8rem; opacity:.75; font-size:.95rem; }
+  .err { margin-top:1rem; display:none; }
+  a { color:#00ff87; }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo">NOVALAB</div>
+  <div class="msg" id="msg">Conectando&hellip;</div>
+  <div class="err" id="err">
+    <p>No se pudo conectar ahora mismo. Reintenta en unos segundos.</p>
+    <p><a href="#" onclick="location.reload(); return false;">Reintentar</a></p>
+  </div>
+</div>
+<script>
+(async () => {
+  const msg = document.getElementById('msg');
+  const err = document.getElementById('err');
+  for (let i = 0; i < 10; i++) {
+    try {
+      const r = await fetch('https://raw.githubusercontent.com/hibiINOVA/novalab/main/url.txt', { cache: 'no-store' });
+      if (r.ok) {
+        const url = (await r.text()).trim();
+        if (url.startsWith('https://')) { location.replace(url); return; }
+      }
+    } catch (_) {}
+    msg.textContent = 'Conectando\u2026 (intento ' + (i + 1) + ')';
+    await new Promise(res => setTimeout(res, 4000));
+  }
+  msg.style.display = 'none';
+  err.style.display = 'block';
+})();
+</script>
+</body>
+</html>
