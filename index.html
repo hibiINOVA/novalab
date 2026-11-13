@@ -7,16 +7,29 @@
 <style>
   body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
          background:#0b0f14; color:#e6edf3; font-family:system-ui,sans-serif; }
-  .box { text-align:center; }
+  .box { text-align:center; max-width:420px; padding:1.5rem; }
   .logo { font-size:1.6rem; font-weight:700; letter-spacing:.12em; color:#00ff87; }
-  .msg { margin-top:.8rem; opacity:.75; font-size:.95rem; }
+  .sub { margin-top:.4rem; opacity:.7; font-size:.9rem; }
+  .apps { display:flex; flex-direction:column; gap:.75rem; margin-top:1.5rem; }
+  .app { display:block; padding:.85rem 1.1rem; border:1px solid #1f2a3a; border-radius:10px;
+         background:#121a26; color:#e6edf3; text-decoration:none; transition:.15s; }
+  .app:hover { border-color:#00ff87; background:#162233; }
+  .app b { display:block; font-size:1rem; color:#00ff87; }
+  .app span { font-size:.8rem; opacity:.7; }
+  .msg { margin-top:1rem; opacity:.75; font-size:.85rem; }
   .err { margin-top:1rem; display:none; }
-  a { color:#00ff87; }
+  .err a { color:#00ff87; }
 </style>
 </head>
 <body>
 <div class="box">
   <div class="logo">NOVALAB</div>
+  <div class="sub">Ecosistema de fabricación digital</div>
+  <div class="apps" id="apps" hidden>
+    <a class="app" id="lnk-prod" href="#"><b>Producción</b><span>Cola, impresoras y pedidos (operadores)</span></a>
+    <a class="app" id="lnk-fin" href="#"><b>Finanzas</b><span>Costos, gastos y utilidades (dueño)</span></a>
+    <a class="app" id="lnk-seg" href="#"><b>Seguimiento</b><span>Consulta pública de pedido con token</span></a>
+  </div>
   <div class="msg" id="msg">Conectando&hellip;</div>
   <div class="err" id="err">
     <p>No se pudo conectar ahora mismo. Reintenta en unos segundos.</p>
@@ -27,22 +40,27 @@
 (async () => {
   const msg = document.getElementById('msg');
   const err = document.getElementById('err');
+  const apps = document.getElementById('apps');
   const ok = (u) => typeof u === 'string' && u.startsWith('https://');
   const sources = [
-    // 1) mismo Pages (se actualiza en ~1 min tras el push de la Pi)
     () => fetch('./url.txt', { cache: 'no-store' }).then(r => r.ok ? r.text() : null),
-    // 2) API de GitHub (siempre fresca, con CORS)
     () => fetch('https://api.github.com/repos/hibiINOVA/novalab/contents/url.txt', {
       headers: { Accept: 'application/vnd.github.raw' }
     }).then(r => r.ok ? r.text() : null),
-    // 3) raw.githubusercontent (fallback, puede ir con algo de retraso)
     () => fetch('https://raw.githubusercontent.com/hibiINOVA/novalab/main/url.txt', { cache: 'no-store' }).then(r => r.ok ? r.text() : null),
   ];
   for (let i = 0; i < 12; i++) {
     for (const src of sources) {
       try {
-        const url = ((await src()) || '').trim();
-        if (ok(url)) { location.replace(url); return; }
+        const url = (((await src()) || '')).trim().replace(/\/+$/, '');
+        if (ok(url)) {
+          document.getElementById('lnk-prod').href = url + '/';
+          document.getElementById('lnk-fin').href = url + '/finanzas/';
+          document.getElementById('lnk-seg').href = url + '/seguimiento/';
+          msg.style.display = 'none';
+          apps.hidden = false;
+          return;
+        }
       } catch (_) {}
     }
     msg.textContent = 'Conectando\u2026 (intento ' + (i + 1) + ')';
